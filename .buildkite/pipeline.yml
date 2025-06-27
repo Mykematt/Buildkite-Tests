@@ -1,3 +1,6 @@
+agents:
+  queue: "mac"
+
 steps:
   - label: "Run_RSpec_Tests"
     key: "run-rspec-tests"
@@ -37,4 +40,4 @@ steps:
     command: |
       echo "Tests completed successfully!"
     depends_on:
-      run-rspec-tests
+      - "run-rspec-tests"
