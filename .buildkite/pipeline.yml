@@ -11,10 +11,6 @@ steps:
     plugins:
       - docker#v5.8.0:
           image: "ruby:3.1"
-          mount-buildkite-agent: false
-          volumes:
-            - ".:/app"
-          workdir: /app
       
     artifact_paths:
       - "tmp/junit.xml"
