@@ -1,10 +1,10 @@
 steps:
   - label: ":rspec: Run RSpec Tests"
     command: |
-      echo "--- :ruby: Setting up Ruby environment"
+      echo ":ruby: Setting up Ruby environment"
       bundle install --jobs=3 --retry=3
       
-      echo "--- :rspec: Running RSpec tests"
+      echo ":rspec: Running RSpec tests"
       bundle exec rspec --format progress --format junit --out tmp/junit.xml
     
     plugins:
@@ -24,7 +24,7 @@ steps:
 
   - label: ":bar_chart: Test Results"
     command: |
-      echo "Tests completed successfully!"
+      echo ":bar_chart: Tests completed successfully!"
     depends_on: 
       - step: ":rspec: Run RSpec Tests"
         allow_failure: false
