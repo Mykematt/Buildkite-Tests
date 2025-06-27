@@ -1,0 +1,30 @@
+steps:
+  - label: ":rspec: Run RSpec Tests"
+    command: |
+      echo "--- :ruby: Setting up Ruby environment"
+      bundle install --jobs=3 --retry=3
+      
+      echo "--- :rspec: Running RSpec tests"
+      bundle exec rspec --format progress --format junit --out tmp/junit.xml
+    
+    plugins:
+      - docker#v5.8.0:
+          image: "ruby:3.1"
+          workdir: /app
+      
+    artifact_paths:
+      - "tmp/junit.xml"
+    
+    retry:
+      automatic:
+        - exit_status: "*"
+          limit: 2
+
+  - wait
+
+  - label: ":bar_chart: Test Results"
+    command: |
+      echo "Tests completed successfully!"
+    depends_on: 
+      - step: ":rspec: Run RSpec Tests"
+        allow_failure: false
