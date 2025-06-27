@@ -2,11 +2,18 @@ steps:
   - label: "Run_RSpec_Tests"
     key: "run-rspec-tests"
     command: |
-      echo "Setting up Ruby environment"
+      echo "=== Debugging: Check current directory and files ==="
+      pwd
+      ls -la
+      echo "=== Check if spec directory exists ==="
+      ls -la spec/
+      
+      echo "=== Setting up Ruby environment ==="
       bundle install --jobs=3 --retry=3
       
-      echo "Running RSpec tests"
-      bundle exec rspec --format progress --format junit --out tmp/junit.xml
+      echo "=== Running RSpec tests ==="
+      mkdir -p tmp
+      bundle exec rspec --format progress --format RspecJunitFormatter --out tmp/junit.xml
     
     plugins:
       - docker#v5.8.0:
