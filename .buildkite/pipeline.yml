@@ -1,5 +1,6 @@
 steps:
   - label: "Run_RSpec_Tests"
+    key: "run-rspec-tests"
     command: |
       echo "Setting up Ruby environment"
       bundle install --jobs=3 --retry=3
@@ -10,6 +11,9 @@ steps:
     plugins:
       - docker#v5.8.0:
           image: "ruby:3.1"
+          mount-buildkite-agent: false
+          volumes:
+            - ".:/app"
           workdir: /app
       
     artifact_paths:
@@ -26,5 +30,4 @@ steps:
     command: |
       echo "Tests completed successfully!"
     depends_on: 
-      - step: "Run_RSpec_Tests"
-        allow_failure: false
+      - "run-rspec-tests"
