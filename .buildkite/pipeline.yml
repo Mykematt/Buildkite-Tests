@@ -16,9 +16,10 @@ steps:
       bundle exec rspec --format progress --format RspecJunitFormatter --out tmp/junit.xml
     
     plugins:
-      - aws-secrets-manager#v1.0.0:
+      - seek-oss/aws-sm#v2.3.3:
           env:
             BUILDKITE_ANALYTICS_TOKEN: "buildkite/analytics-token"
+
       - docker#v5.8.0:
           image: "ruby:3.1"
           environment:
