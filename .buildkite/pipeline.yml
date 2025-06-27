@@ -15,6 +15,10 @@ steps:
       mkdir -p tmp
       bundle exec rspec --format progress --format RspecJunitFormatter --out tmp/junit.xml
     
+    env:
+      BUILDKITE_ANALYTICS_TOKEN: "LF6ASbQHQJZYJQNwj3uPZQSH"
+      BUILDKITE_TEST_SUITE_SLUG: "my-rspec-example-test-suite"
+    
     plugins:
       - docker#v5.8.0:
           image: "ruby:3.1"
@@ -32,5 +36,5 @@ steps:
   - label: "Test Results Summary"
     command: |
       echo "Tests completed successfully!"
-    depends_on: 
-      - "run-rspec-tests"
+    depends_on:
+      run-rspec-tests
