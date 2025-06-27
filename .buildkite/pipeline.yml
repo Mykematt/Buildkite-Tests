@@ -1,5 +1,5 @@
 steps:
-  - label: "Run RSpec Tests"
+  - label: "Run_RSpec_Tests"
     command: |
       echo "Setting up Ruby environment"
       bundle install --jobs=3 --retry=3
@@ -26,5 +26,5 @@ steps:
     command: |
       echo "Tests completed successfully!"
     depends_on: 
-      - step: "Run RSpec Tests"
+      - step: "Run_RSpec_Tests"
         allow_failure: false
