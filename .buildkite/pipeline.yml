@@ -1,38 +1,40 @@
 steps:
   - label: "Run_RSpec_Tests"
     key: "run-rspec-tests"
-    command: |
-      echo "=== Debugging: Check current directory and files ==="
-      pwd
-      ls -la
-      echo "=== Check if spec directory exists ==="
-      ls -la spec/
-      
-      echo "=== Setting up Ruby environment ==="
-      bundle install --jobs=3
-      
-      echo "=== Debug: Check environment variables ==="
-      echo "BUILDKITE_ANALYTICS_TOKEN: ${BUILDKITE_ANALYTICS_TOKEN:-NOT_SET}"
-      echo "BUILDKITE_TEST_SUITE_SLUG: ${BUILDKITE_TEST_SUITE_SLUG:-NOT_SET}"
-      
-      echo "=== Running RSpec tests ==="
-      mkdir -p tmp
-      bundle exec rspec --format progress --format RspecJunitFormatter --out tmp/junit.xml
     
     plugins:
       - seek-oss/aws-sm#v2.3.3:
           env:
-            BUILDKITE_ANALYTICS_TOKEN: "buildkite/analytics-token"
-            BUILDKITE_TEST_SUITE_SLUG: "buildkite/test-suite-slug"
+            BUILDKITE_ANALYTICS_TOKEN: buildkite/analytics-token
+            BUILDKITE_TEST_SUITE_SLUG: buildkite/test-suite-slug
 
       - docker#v5.8.0:
           image: "ruby:3.1"
+          command: |
+            echo "=== Debugging: Check current directory and files ==="
+            pwd
+            ls -la
+            echo "=== Check if spec directory exists ==="
+            ls -la spec/
+            
+            echo "=== Setting up Ruby environment ==="
+            bundle install --jobs=3
+            
+            echo "=== Debug: Check environment variables ==="
+            echo "BUILDKITE_ANALYTICS_TOKEN: ${BUILDKITE_ANALYTICS_TOKEN:-NOT_SET}"
+            echo "BUILDKITE_TEST_SUITE_SLUG: ${BUILDKITE_TEST_SUITE_SLUG:-NOT_SET}"
+            
+            echo "=== Running RSpec tests ==="
+            mkdir -p tmp
+            bundle exec rspec --format progress --format RspecJunitFormatter --out tmp/junit.xml
           environment:
             - BUILDKITE
             - BUILDKITE_BUILD_ID
             - BUILDKITE_JOB_ID
             - BUILDKITE_STEP_ID
-      
+            - BUILDKITE_ANALYTICS_TOKEN
+            - BUILDKITE_TEST_SUITE_SLUG
+
     artifact_paths:
       - "tmp/junit.xml"
 
