@@ -9,7 +9,7 @@ steps:
       ls -la spec/
       
       echo "=== Setting up Ruby environment ==="
-      bundle install --jobs=3 --retry=3
+      bundle install --jobs=3
       
       echo "=== Running RSpec tests ==="
       mkdir -p tmp
@@ -27,15 +27,9 @@ steps:
             - BUILDKITE_BUILD_ID
             - BUILDKITE_JOB_ID
             - BUILDKITE_STEP_ID
-            - BUILDKITE_TEST_SUITE_SLUG
       
     artifact_paths:
       - "tmp/junit.xml"
-    
-    retry:
-      automatic:
-        - exit_status: "*"
-          limit: 2
 
   - wait
 
