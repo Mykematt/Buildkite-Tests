@@ -19,6 +19,7 @@ steps:
       - seek-oss/aws-sm#v2.3.3:
           env:
             BUILDKITE_ANALYTICS_TOKEN: "buildkite/analytics-token"
+            BUILDKITE_TEST_SUITE_SLUG: "buildkite/test-suite-slug"
 
       - docker#v5.8.0:
           image: "ruby:3.1"
