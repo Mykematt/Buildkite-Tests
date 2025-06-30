@@ -42,13 +42,7 @@ steps:
               
               # Exit with the original RSpec exit code at the end
               exit $RSPEC_EXIT_CODE
-          environment:
-            - BUILDKITE
-            - BUILDKITE_BUILD_ID
-            - BUILDKITE_JOB_ID
-            - BUILDKITE_STEP_ID
-            - BUILDKITE_ANALYTICS_TOKEN
-            - BUILDKITE_TEST_SUITE_SLUG
+          propagate-environment: true
 
     artifact_paths:
       - "tmp/junit.xml"
