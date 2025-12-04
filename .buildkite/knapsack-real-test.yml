@@ -1,8 +1,8 @@
 # ============================================================================
-# KNAPSACK PRO REAL TEST - Using Separate Tokens
+# KNAPSACK PRO BUG REPRODUCTION - Using SAME Token (causes test mixing!)
 # ============================================================================
-# This pipeline runs actual RSpec tests through Knapsack Pro
-# to demonstrate proper test splitting with separate tokens.
+# This pipeline demonstrates the BUG: when both test suites use the SAME
+# Knapsack Pro token AND same parallelism, tests get mixed between suites.
 # ============================================================================
 
 steps:
@@ -16,9 +16,11 @@ steps:
   - wait
 
   # ============================================================================
-  # CORRECT SETUP: Separate tokens for each test suite
+  # BUG REPRODUCTION: Both suites use SAME token!
+  # Knapsack Pro cache key = (branch, commit, node_total, api_token)
+  # When both have same parallelism (2) and same token, they share a queue!
   # ============================================================================
-  - group: ":white_check_mark: Unit Tests (separate token)"
+  - group: ":bug: Unit Tests (SAME token - will cause mixing!)"
     steps:
       - label: ":test_tube: Unit Tests {{.ID}}"
         parallelism: 2
@@ -42,6 +44,7 @@ steps:
                 - BUILDKITE_BRANCH
         command: |
           echo "=== Unit Tests - Node $${BUILDKITE_PARALLEL_JOB} of $${BUILDKITE_PARALLEL_JOB_COUNT} ==="
+          echo "WARNING: Using SAME token as Acceptance Tests - this will cause test mixing!"
           
           export KNAPSACK_PRO_TEST_SUITE_TOKEN_RSPEC=$${KNAPSACK_PRO_TEST_SUITE_TOKEN_UNIT}
           
@@ -52,12 +55,12 @@ steps:
         agents:
           queue: mac
 
-  - group: ":sparkles: Acceptance Tests (separate token)"
+  - group: ":bug: Acceptance Tests (SAME token - will cause mixing!)"
     steps:
       - label: ":sparkles: Acceptance Tests {{.ID}}"
         parallelism: 2
         secrets:
-          - KNAPSACK_PRO_TEST_SUITE_TOKEN_ACCEPTANCE
+          - KNAPSACK_PRO_TEST_SUITE_TOKEN_UNIT
         env:
           KNAPSACK_PRO_TEST_FILE_PATTERN: "spec/acceptance/**/*_spec.rb"
           KNAPSACK_PRO_LOG_LEVEL: "info"
@@ -66,7 +69,7 @@ steps:
               image: "ruby:3.1"
               propagate-environment: true
               environment:
-                - KNAPSACK_PRO_TEST_SUITE_TOKEN_ACCEPTANCE
+                - KNAPSACK_PRO_TEST_SUITE_TOKEN_UNIT
                 - KNAPSACK_PRO_TEST_FILE_PATTERN
                 - KNAPSACK_PRO_LOG_LEVEL
                 - BUILDKITE_PARALLEL_JOB_COUNT
@@ -76,8 +79,9 @@ steps:
                 - BUILDKITE_BRANCH
         command: |
           echo "=== Acceptance Tests - Node $${BUILDKITE_PARALLEL_JOB} of $${BUILDKITE_PARALLEL_JOB_COUNT} ==="
+          echo "WARNING: Using SAME token as Unit Tests - this will cause test mixing!"
           
-          export KNAPSACK_PRO_TEST_SUITE_TOKEN_RSPEC=$${KNAPSACK_PRO_TEST_SUITE_TOKEN_ACCEPTANCE}
+          export KNAPSACK_PRO_TEST_SUITE_TOKEN_RSPEC=$${KNAPSACK_PRO_TEST_SUITE_TOKEN_UNIT}
           
           bundle install --jobs=4 --quiet
           
@@ -91,15 +95,15 @@ steps:
   - label: ":memo: Summary"
     command: |
       echo "=============================================="
-      echo "TEST RUN COMPLETE"
+      echo "BUG REPRODUCTION TEST"
       echo "=============================================="
       echo ""
-      echo "Each test suite used its OWN Knapsack Pro token:"
+      echo "Both test suites used the SAME Knapsack Pro token:"
       echo "  - Unit Tests:       KNAPSACK_PRO_TEST_SUITE_TOKEN_UNIT"
-      echo "  - Acceptance Tests: KNAPSACK_PRO_TEST_SUITE_TOKEN_ACCEPTANCE"
+      echo "  - Acceptance Tests: KNAPSACK_PRO_TEST_SUITE_TOKEN_UNIT (SAME!)"
       echo ""
-      echo "This ensures each suite has its own queue and"
-      echo "tests are not mixed between suites."
+      echo "With same parallelism (2) and same token, Knapsack Pro"
+      echo "treats them as ONE test suite and mixes tests!"
       echo "=============================================="
     agents:
       queue: mac
