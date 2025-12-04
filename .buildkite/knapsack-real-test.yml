@@ -23,7 +23,7 @@ steps:
   - group: ":bug: Unit Tests (SAME token - will mix!)"
     steps:
       - label: ":test_tube: Unit Tests {{.ID}}"
-        parallelism: 10
+        parallelism: 1
         secrets:
           - KNAPSACK_PRO_TEST_SUITE_TOKEN_UNIT
         env:
@@ -58,7 +58,7 @@ steps:
   - group: ":bug: Acceptance Tests (SAME token - will mix!)"
     steps:
       - label: ":sparkles: Acceptance Tests {{.ID}}"
-        parallelism: 10
+        parallelism: 1
         secrets:
           - KNAPSACK_PRO_TEST_SUITE_TOKEN_UNIT
         env:
