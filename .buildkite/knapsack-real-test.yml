@@ -22,6 +22,8 @@ steps:
     steps:
       - label: ":test_tube: Unit Tests {{.ID}}"
         parallelism: 2
+        secrets:
+          - KNAPSACK_PRO_TEST_SUITE_TOKEN_UNIT
         plugins:
           - docker#v5.11.0:
               image: "ruby:3.1"
@@ -49,6 +51,8 @@ steps:
     steps:
       - label: ":sparkles: Acceptance Tests {{.ID}}"
         parallelism: 2
+        secrets:
+          - KNAPSACK_PRO_TEST_SUITE_TOKEN_ACCEPTANCE
         plugins:
           - docker#v5.11.0:
               image: "ruby:3.1"
