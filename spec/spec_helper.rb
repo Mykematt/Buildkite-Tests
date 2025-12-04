@@ -1,10 +1,13 @@
 require 'yaml'
 require 'json'
 require 'buildkite/test_collector'
+require 'knapsack_pro'
 
 Buildkite::TestCollector.configure(
   hook: :rspec
 )
+
+KnapsackPro::Adapters::RSpecAdapter.bind
 
 begin
   skip_data = File.read('skipped.json')

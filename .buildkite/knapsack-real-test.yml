@@ -1,0 +1,95 @@
+# ============================================================================
+# KNAPSACK PRO REAL TEST - Using Separate Tokens
+# ============================================================================
+# This pipeline runs actual RSpec tests through Knapsack Pro
+# to demonstrate proper test splitting with separate tokens.
+# ============================================================================
+
+steps:
+  - label: ":ruby: Setup & Install"
+    command: |
+      echo "Ruby version:"
+      ruby --version || echo "Ruby not installed on host"
+    agents:
+      queue: mac
+
+  - wait
+
+  # ============================================================================
+  # CORRECT SETUP: Separate tokens for each test suite
+  # ============================================================================
+  - group: ":white_check_mark: Unit Tests (separate token)"
+    steps:
+      - label: ":test_tube: Unit Tests {{.ID}}"
+        parallelism: 2
+        plugins:
+          - docker#v5.11.0:
+              image: "ruby:3.1"
+              propagate-environment: true
+              environment:
+                - KNAPSACK_PRO_TEST_SUITE_TOKEN_RSPEC
+                - KNAPSACK_PRO_LOG_LEVEL=info
+                - BUILDKITE_PARALLEL_JOB_COUNT
+                - BUILDKITE_PARALLEL_JOB
+                - BUILDKITE_BUILD_ID
+                - BUILDKITE_COMMIT
+                - BUILDKITE_BRANCH
+        command: |
+          echo "=== Unit Tests - Node $${BUILDKITE_PARALLEL_JOB} of $${BUILDKITE_PARALLEL_JOB_COUNT} ==="
+          
+          bundle install --jobs=4 --quiet
+          
+          echo "--- Running Knapsack Pro Queue Mode for Unit Tests"
+          bundle exec rake knapsack_pro:queue:rspec["--format progress"]
+        env:
+          KNAPSACK_PRO_TEST_SUITE_TOKEN_RSPEC: ${KNAPSACK_PRO_TEST_SUITE_TOKEN_UNIT}
+          KNAPSACK_PRO_TEST_FILE_PATTERN: "spec/unit/**/*_spec.rb"
+        agents:
+          queue: mac
+
+  - group: ":sparkles: Acceptance Tests (separate token)"
+    steps:
+      - label: ":sparkles: Acceptance Tests {{.ID}}"
+        parallelism: 2
+        plugins:
+          - docker#v5.11.0:
+              image: "ruby:3.1"
+              propagate-environment: true
+              environment:
+                - KNAPSACK_PRO_TEST_SUITE_TOKEN_RSPEC
+                - KNAPSACK_PRO_LOG_LEVEL=info
+                - BUILDKITE_PARALLEL_JOB_COUNT
+                - BUILDKITE_PARALLEL_JOB
+                - BUILDKITE_BUILD_ID
+                - BUILDKITE_COMMIT
+                - BUILDKITE_BRANCH
+        command: |
+          echo "=== Acceptance Tests - Node $${BUILDKITE_PARALLEL_JOB} of $${BUILDKITE_PARALLEL_JOB_COUNT} ==="
+          
+          bundle install --jobs=4 --quiet
+          
+          echo "--- Running Knapsack Pro Queue Mode for Acceptance Tests"
+          bundle exec rake knapsack_pro:queue:rspec["--format progress"]
+        env:
+          KNAPSACK_PRO_TEST_SUITE_TOKEN_RSPEC: ${KNAPSACK_PRO_TEST_SUITE_TOKEN_ACCEPTANCE}
+          KNAPSACK_PRO_TEST_FILE_PATTERN: "spec/acceptance/**/*_spec.rb"
+        agents:
+          queue: mac
+
+  - wait
+
+  - label: ":memo: Summary"
+    command: |
+      echo "=============================================="
+      echo "TEST RUN COMPLETE"
+      echo "=============================================="
+      echo ""
+      echo "Each test suite used its OWN Knapsack Pro token:"
+      echo "  - Unit Tests:       KNAPSACK_PRO_TEST_SUITE_TOKEN_UNIT"
+      echo "  - Acceptance Tests: KNAPSACK_PRO_TEST_SUITE_TOKEN_ACCEPTANCE"
+      echo ""
+      echo "This ensures each suite has its own queue and"
+      echo "tests are not mixed between suites."
+      echo "=============================================="
+    agents:
+      queue: mac
