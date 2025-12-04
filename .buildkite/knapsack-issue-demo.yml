@@ -1,0 +1,187 @@
+# ============================================================================
+# KNAPSACK PRO TOKEN ISSUE DEMONSTRATION
+# ============================================================================
+# This pipeline demonstrates why using the SAME Knapsack Pro API token
+# with the SAME parallelism value causes test filtering to break.
+#
+# Customer Issue: https://buildkite.com/eagronom/core-tests
+# - Unit tests and Feature tests steps both running unit tests
+# - Started when parallelism was set to 10 for both steps
+# ============================================================================
+
+env:
+  # Simulating a shared Knapsack Pro token
+  KNAPSACK_PRO_TEST_SUITE_TOKEN_RSPEC: "shared-token-123"
+
+steps:
+  # ============================================================================
+  # SECTION 1: DEMONSTRATE THE PROBLEM
+  # ============================================================================
+  - label: ":warning: Problem Demo Setup"
+    command: |
+      echo "=============================================="
+      echo "KNAPSACK PRO TOKEN ISSUE DEMONSTRATION"
+      echo "=============================================="
+      echo ""
+      echo "This demo shows what happens when two different"
+      echo "test suites share the SAME API token with SAME parallelism."
+      echo ""
+      echo "Test files in this repo:"
+      echo "  spec/unit/*.rb       - Unit tests"
+      echo "  spec/acceptance/*.rb - Acceptance tests (like feature tests)"
+      echo ""
+    agents:
+      queue: mac
+
+  - wait
+
+  - group: ":x: PROBLEMATIC: Same Token + Same Parallelism (=2)"
+    steps:
+      # Simulating Unit Tests with parallelism 2
+      - label: ":test_tube: Unit Tests {{.ID}}"
+        parallelism: 2
+        env:
+          # Same token as Feature tests!
+          KNAPSACK_TOKEN: "${KNAPSACK_PRO_TEST_SUITE_TOKEN_RSPEC}"
+          TEST_FILE_PATTERN: "spec/unit/**/*_spec.rb"
+        command: |
+          echo "=== UNIT TESTS - Job $${BUILDKITE_PARALLEL_JOB} of $${BUILDKITE_PARALLEL_JOB_COUNT} ==="
+          echo ""
+          echo "Configuration:"
+          echo "  KNAPSACK_TOKEN: $${KNAPSACK_TOKEN}"
+          echo "  TEST_FILE_PATTERN: $${TEST_FILE_PATTERN}"
+          echo "  BUILDKITE_PARALLEL_JOB_COUNT: $${BUILDKITE_PARALLEL_JOB_COUNT}"
+          echo "  BUILDKITE_PARALLEL_JOB: $${BUILDKITE_PARALLEL_JOB}"
+          echo ""
+          echo "Knapsack Pro Cache Key:"
+          echo "  (branch=$${BUILDKITE_BRANCH}, commit=$${BUILDKITE_COMMIT:0:7}, nodes=$${BUILDKITE_PARALLEL_JOB_COUNT}, token=$${KNAPSACK_TOKEN})"
+          echo ""
+          echo "Expected tests: spec/unit/*.rb"
+          find spec/unit -name "*_spec.rb" 2>/dev/null || echo "(spec/unit not found)"
+        agents:
+          queue: mac
+
+      # Simulating Feature/Acceptance Tests with SAME parallelism 2
+      - label: ":sparkles: Acceptance Tests {{.ID}}"
+        parallelism: 2
+        env:
+          # PROBLEM: Same token as Unit tests!
+          KNAPSACK_TOKEN: "${KNAPSACK_PRO_TEST_SUITE_TOKEN_RSPEC}"
+          TEST_FILE_PATTERN: "spec/acceptance/**/*_spec.rb"
+        command: |
+          echo "=== ACCEPTANCE TESTS - Job $${BUILDKITE_PARALLEL_JOB} of $${BUILDKITE_PARALLEL_JOB_COUNT} ==="
+          echo ""
+          echo "Configuration:"
+          echo "  KNAPSACK_TOKEN: $${KNAPSACK_TOKEN}"
+          echo "  TEST_FILE_PATTERN: $${TEST_FILE_PATTERN}"
+          echo "  BUILDKITE_PARALLEL_JOB_COUNT: $${BUILDKITE_PARALLEL_JOB_COUNT}"
+          echo "  BUILDKITE_PARALLEL_JOB: $${BUILDKITE_PARALLEL_JOB}"
+          echo ""
+          echo "Knapsack Pro Cache Key:"
+          echo "  (branch=$${BUILDKITE_BRANCH}, commit=$${BUILDKITE_COMMIT:0:7}, nodes=$${BUILDKITE_PARALLEL_JOB_COUNT}, token=$${KNAPSACK_TOKEN})"
+          echo ""
+          echo "⚠️  PROBLEM: Cache key is IDENTICAL to Unit Tests!"
+          echo "   Knapsack Pro will treat these 4 jobs as ONE test suite"
+          echo "   and distribute ALL tests across them, ignoring TEST_FILE_PATTERN!"
+          echo ""
+          echo "Expected tests: spec/acceptance/*.rb"
+          find spec/acceptance -name "*_spec.rb" 2>/dev/null || echo "(spec/acceptance not found)"
+          echo ""
+          echo "❌ But might receive unit tests instead because of shared queue!"
+        agents:
+          queue: mac
+
+  - wait
+
+  # ============================================================================
+  # SECTION 2: DEMONSTRATE THE SOLUTION
+  # ============================================================================
+  - group: ":white_check_mark: CORRECT: Separate Tokens"
+    steps:
+      - label: ":test_tube: Unit Tests (separate token) {{.ID}}"
+        parallelism: 2
+        env:
+          # Separate token for unit tests
+          KNAPSACK_TOKEN: "unit-tests-token-abc"
+          TEST_FILE_PATTERN: "spec/unit/**/*_spec.rb"
+        command: |
+          echo "=== UNIT TESTS - Job $${BUILDKITE_PARALLEL_JOB} of $${BUILDKITE_PARALLEL_JOB_COUNT} ==="
+          echo ""
+          echo "Configuration:"
+          echo "  KNAPSACK_TOKEN: $${KNAPSACK_TOKEN}"
+          echo "  TEST_FILE_PATTERN: $${TEST_FILE_PATTERN}"
+          echo ""
+          echo "Knapsack Pro Cache Key:"
+          echo "  (branch=$${BUILDKITE_BRANCH}, commit=$${BUILDKITE_COMMIT:0:7}, nodes=$${BUILDKITE_PARALLEL_JOB_COUNT}, token=$${KNAPSACK_TOKEN})"
+          echo ""
+          echo "✅ This step has its OWN unique cache key"
+          echo "   Unit tests will stay in their own queue!"
+        agents:
+          queue: mac
+
+      - label: ":sparkles: Acceptance Tests (separate token) {{.ID}}"
+        parallelism: 2
+        env:
+          # DIFFERENT token for acceptance tests
+          KNAPSACK_TOKEN: "acceptance-tests-token-xyz"
+          TEST_FILE_PATTERN: "spec/acceptance/**/*_spec.rb"
+        command: |
+          echo "=== ACCEPTANCE TESTS - Job $${BUILDKITE_PARALLEL_JOB} of $${BUILDKITE_PARALLEL_JOB_COUNT} ==="
+          echo ""
+          echo "Configuration:"
+          echo "  KNAPSACK_TOKEN: $${KNAPSACK_TOKEN}"
+          echo "  TEST_FILE_PATTERN: $${TEST_FILE_PATTERN}"
+          echo ""
+          echo "Knapsack Pro Cache Key:"
+          echo "  (branch=$${BUILDKITE_BRANCH}, commit=$${BUILDKITE_COMMIT:0:7}, nodes=$${BUILDKITE_PARALLEL_JOB_COUNT}, token=$${KNAPSACK_TOKEN})"
+          echo ""
+          echo "✅ This step has its OWN unique cache key"
+          echo "   Acceptance tests will stay in their own queue!"
+        agents:
+          queue: mac
+
+  - wait
+
+  # ============================================================================
+  # SUMMARY
+  # ============================================================================
+  - label: ":memo: Summary & Fix"
+    command: |
+      echo "=============================================="
+      echo "WHY THE CUSTOMER'S TESTS BROKE"
+      echo "=============================================="
+      echo ""
+      echo "BEFORE (Working):"
+      echo "  Unit Tests:      parallelism: 8,  token: same"
+      echo "  Feature Tests:   parallelism: 6,  token: same"
+      echo "  → Different parallelism = different cache keys"
+      echo "  → Separate queues (accidentally)"
+      echo ""
+      echo "AFTER Sep 26 (Broken):"
+      echo "  Unit Tests:      parallelism: 10, token: same"
+      echo "  Feature Tests:   parallelism: 10, token: same"  
+      echo "  → Same parallelism = identical cache keys"
+      echo "  → Shared queue = tests mixed together!"
+      echo ""
+      echo "=============================================="
+      echo "THE FIX"
+      echo "=============================================="
+      echo ""
+      echo "Use SEPARATE API tokens for each test suite:"
+      echo ""
+      echo "  # Unit Tests"
+      echo "  env:"
+      echo "    KNAPSACK_PRO_TEST_SUITE_TOKEN_RSPEC: \$KNAPSACK_TOKEN_UNIT"
+      echo ""
+      echo "  # Feature Tests"
+      echo "  env:"
+      echo "    KNAPSACK_PRO_TEST_SUITE_TOKEN_RSPEC: \$KNAPSACK_TOKEN_FEATURE"
+      echo ""
+      echo "Generate new tokens at: https://knapsackpro.com/dashboard"
+      echo ""
+      echo "Also ensure docker-compose passes these env vars:"
+      echo "  - BUILDKITE_PARALLEL_JOB_COUNT"
+      echo "  - BUILDKITE_PARALLEL_JOB"
+      echo "=============================================="
+    agents:
+      queue: mac
