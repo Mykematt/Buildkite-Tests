@@ -24,14 +24,17 @@ steps:
         parallelism: 2
         secrets:
           - KNAPSACK_PRO_TEST_SUITE_TOKEN_UNIT
+        env:
+          KNAPSACK_PRO_TEST_FILE_PATTERN: "spec/unit/**/*_spec.rb"
+          KNAPSACK_PRO_LOG_LEVEL: "info"
         plugins:
           - docker#v5.11.0:
               image: "ruby:3.1"
               propagate-environment: true
               environment:
-                - KNAPSACK_PRO_TEST_SUITE_TOKEN_RSPEC=$KNAPSACK_PRO_TEST_SUITE_TOKEN_UNIT
-                - KNAPSACK_PRO_LOG_LEVEL=info
-                - KNAPSACK_PRO_TEST_FILE_PATTERN=spec/unit/**/*_spec.rb
+                - KNAPSACK_PRO_TEST_SUITE_TOKEN_UNIT
+                - KNAPSACK_PRO_TEST_FILE_PATTERN
+                - KNAPSACK_PRO_LOG_LEVEL
                 - BUILDKITE_PARALLEL_JOB_COUNT
                 - BUILDKITE_PARALLEL_JOB
                 - BUILDKITE_BUILD_ID
@@ -39,6 +42,8 @@ steps:
                 - BUILDKITE_BRANCH
         command: |
           echo "=== Unit Tests - Node $${BUILDKITE_PARALLEL_JOB} of $${BUILDKITE_PARALLEL_JOB_COUNT} ==="
+          
+          export KNAPSACK_PRO_TEST_SUITE_TOKEN_RSPEC=$${KNAPSACK_PRO_TEST_SUITE_TOKEN_UNIT}
           
           bundle install --jobs=4 --quiet
           
@@ -53,14 +58,17 @@ steps:
         parallelism: 2
         secrets:
           - KNAPSACK_PRO_TEST_SUITE_TOKEN_ACCEPTANCE
+        env:
+          KNAPSACK_PRO_TEST_FILE_PATTERN: "spec/acceptance/**/*_spec.rb"
+          KNAPSACK_PRO_LOG_LEVEL: "info"
         plugins:
           - docker#v5.11.0:
               image: "ruby:3.1"
               propagate-environment: true
               environment:
-                - KNAPSACK_PRO_TEST_SUITE_TOKEN_RSPEC=$KNAPSACK_PRO_TEST_SUITE_TOKEN_ACCEPTANCE
-                - KNAPSACK_PRO_LOG_LEVEL=info
-                - KNAPSACK_PRO_TEST_FILE_PATTERN=spec/acceptance/**/*_spec.rb
+                - KNAPSACK_PRO_TEST_SUITE_TOKEN_ACCEPTANCE
+                - KNAPSACK_PRO_TEST_FILE_PATTERN
+                - KNAPSACK_PRO_LOG_LEVEL
                 - BUILDKITE_PARALLEL_JOB_COUNT
                 - BUILDKITE_PARALLEL_JOB
                 - BUILDKITE_BUILD_ID
@@ -68,6 +76,8 @@ steps:
                 - BUILDKITE_BRANCH
         command: |
           echo "=== Acceptance Tests - Node $${BUILDKITE_PARALLEL_JOB} of $${BUILDKITE_PARALLEL_JOB_COUNT} ==="
+          
+          export KNAPSACK_PRO_TEST_SUITE_TOKEN_RSPEC=$${KNAPSACK_PRO_TEST_SUITE_TOKEN_ACCEPTANCE}
           
           bundle install --jobs=4 --quiet
           
