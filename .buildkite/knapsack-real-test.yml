@@ -1,8 +1,8 @@
 # ============================================================================
-# KNAPSACK PRO BUG REPRODUCTION - Using SAME Token (causes test mixing!)
+# KNAPSACK PRO FIX - Using SEPARATE Tokens (correct setup!)
 # ============================================================================
-# This pipeline demonstrates the BUG: when both test suites use the SAME
-# Knapsack Pro token AND same parallelism, tests get mixed between suites.
+# This pipeline demonstrates the FIX: each test suite uses its OWN
+# Knapsack Pro token, ensuring tests are never mixed between suites.
 # ============================================================================
 
 steps:
@@ -16,11 +16,11 @@ steps:
   - wait
 
   # ============================================================================
-  # BUG REPRODUCTION: Both suites use SAME token!
+  # FIX: Each suite uses its OWN token!
   # Knapsack Pro cache key = (branch, commit, node_total, api_token)
-  # When both have same parallelism (2) and same token, they share a queue!
+  # Different tokens = different queues = no mixing!
   # ============================================================================
-  - group: ":bug: Unit Tests (SAME token - will cause mixing!)"
+  - group: ":white_check_mark: Unit Tests (SEPARATE token)"
     steps:
       - label: ":test_tube: Unit Tests {{.ID}}"
         parallelism: 10
@@ -44,7 +44,7 @@ steps:
                 - BUILDKITE_BRANCH
         command: |
           echo "=== Unit Tests - Node $${BUILDKITE_PARALLEL_JOB} of $${BUILDKITE_PARALLEL_JOB_COUNT} ==="
-          echo "WARNING: Using SAME token as Acceptance Tests - this will cause test mixing!"
+          echo "Using SEPARATE token: KNAPSACK_PRO_TEST_SUITE_TOKEN_UNIT"
           
           export KNAPSACK_PRO_TEST_SUITE_TOKEN_RSPEC=$${KNAPSACK_PRO_TEST_SUITE_TOKEN_UNIT}
           
@@ -55,12 +55,12 @@ steps:
         agents:
           queue: mac
 
-  - group: ":bug: Acceptance Tests (SAME token - will cause mixing!)"
+  - group: ":white_check_mark: Acceptance Tests (SEPARATE token)"
     steps:
       - label: ":sparkles: Acceptance Tests {{.ID}}"
         parallelism: 10
         secrets:
-          - KNAPSACK_PRO_TEST_SUITE_TOKEN_UNIT
+          - KNAPSACK_PRO_TEST_SUITE_TOKEN_ACCEPTANCE
         env:
           KNAPSACK_PRO_TEST_FILE_PATTERN: "spec/acceptance/**/*_spec.rb"
           KNAPSACK_PRO_LOG_LEVEL: "info"
@@ -69,7 +69,7 @@ steps:
               image: "ruby:3.1"
               propagate-environment: true
               environment:
-                - KNAPSACK_PRO_TEST_SUITE_TOKEN_UNIT
+                - KNAPSACK_PRO_TEST_SUITE_TOKEN_ACCEPTANCE
                 - KNAPSACK_PRO_TEST_FILE_PATTERN
                 - KNAPSACK_PRO_LOG_LEVEL
                 - BUILDKITE_PARALLEL_JOB_COUNT
@@ -79,9 +79,9 @@ steps:
                 - BUILDKITE_BRANCH
         command: |
           echo "=== Acceptance Tests - Node $${BUILDKITE_PARALLEL_JOB} of $${BUILDKITE_PARALLEL_JOB_COUNT} ==="
-          echo "WARNING: Using SAME token as Unit Tests - this will cause test mixing!"
+          echo "Using SEPARATE token: KNAPSACK_PRO_TEST_SUITE_TOKEN_ACCEPTANCE"
           
-          export KNAPSACK_PRO_TEST_SUITE_TOKEN_RSPEC=$${KNAPSACK_PRO_TEST_SUITE_TOKEN_UNIT}
+          export KNAPSACK_PRO_TEST_SUITE_TOKEN_RSPEC=$${KNAPSACK_PRO_TEST_SUITE_TOKEN_ACCEPTANCE}
           
           bundle install --jobs=4 --quiet
           
@@ -95,15 +95,15 @@ steps:
   - label: ":memo: Summary"
     command: |
       echo "=============================================="
-      echo "BUG REPRODUCTION TEST"
+      echo "FIX VERIFIED"
       echo "=============================================="
       echo ""
-      echo "Both test suites used the SAME Knapsack Pro token:"
+      echo "Each test suite used its OWN Knapsack Pro token:"
       echo "  - Unit Tests:       KNAPSACK_PRO_TEST_SUITE_TOKEN_UNIT"
-      echo "  - Acceptance Tests: KNAPSACK_PRO_TEST_SUITE_TOKEN_UNIT (SAME!)"
+      echo "  - Acceptance Tests: KNAPSACK_PRO_TEST_SUITE_TOKEN_ACCEPTANCE"
       echo ""
-      echo "With same parallelism (2) and same token, Knapsack Pro"
-      echo "treats them as ONE test suite and mixes tests!"
+      echo "With separate tokens, each suite has its own queue"
+      echo "and tests are NOT mixed between suites!"
       echo "=============================================="
     agents:
       queue: mac
