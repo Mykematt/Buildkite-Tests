@@ -1,0 +1,6 @@
+# Simple pipeline to upload the Knapsack demo
+steps:
+  - label: ":arrow_up: Upload Knapsack Demo Pipeline"
+    command: buildkite-agent pipeline upload .buildkite/knapsack-issue-demo.yml
+    agents:
+      queue: mac
