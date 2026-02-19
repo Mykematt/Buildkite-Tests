@@ -1,5 +1,5 @@
 steps:
-  - label: ":pipeline: Step from pipeline 03"
+  - label: "Step from pipeline 03"
     command: echo "hello from pipeline 03"
     if_changes:
       - "pipelines/pipeline-03.yml"
