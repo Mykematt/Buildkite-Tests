@@ -1,18 +1,5 @@
 steps:
-  - label: ":stopwatch: Test 1 - Sequential uploads"
-    key: sequential
-    command: .buildkite/scripts/test-sequential.sh
+  - label: ":pipeline: Upload test pipeline"
+    command: buildkite-agent pipeline upload pipelines/cache-self-hosted-test.yml
     agents:
-      queue: mac
-
-  - label: ":stopwatch: Test 2 - Concat then single upload"
-    key: concat
-    command: .buildkite/scripts/test-concat.sh
-    agents:
-      queue: mac
-
-  - label: ":stopwatch: Test 3 - Parallel uploads"
-    key: parallel
-    command: .buildkite/scripts/test-parallel.sh
-    agents:
-      queue: mac
+      queue: linux-hosted

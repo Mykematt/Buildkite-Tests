@@ -1,0 +1,27 @@
+steps:
+  - label: ":package: Step 1 - hosted with cache"
+    command: echo "I run on hosted and use cache"
+    agents:
+      queue: linux-hosted
+    cache:
+      paths:
+        - node_modules/
+      name: "node-modules-cache"
+
+  - label: ":package: Step 2 - also hosted with cache"
+    command: echo "Also hosted, also cached"
+    agents:
+      queue: linux-hosted
+    cache:
+      paths:
+        - .gradle/
+      name: "gradle-cache"
+
+  - label: ":warning: Step 3 - self-hosted WITH cache (should this fatal?)"
+    command: echo "I run on self-hosted but also have cache settings"
+    agents:
+      queue: linux
+    cache:
+      paths:
+        - vendor/
+      name: "vendor-cache"
