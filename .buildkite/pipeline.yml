@@ -1,37 +1,12 @@
 steps:
   - label: ":stopwatch: Test 1 - Sequential uploads"
     key: sequential
-    command: |
-      echo "--- Sequential upload of 50 pipeline files"
-      TOTAL_START=$(date +%s%3N)
-      for f in pipelines/pipeline-*.yml; do
-        START=$(date +%s%3N)
-        buildkite-agent pipeline upload "$f"
-        END=$(date +%s%3N)
-        echo "upload $f took $((END - START))ms"
-      done
-      TOTAL_END=$(date +%s%3N)
-      echo "~~~ Total sequential time: $((TOTAL_END - TOTAL_START))ms"
+    command: .buildkite/scripts/test-sequential.sh
 
   - label: ":stopwatch: Test 2 - Concat then single upload"
     key: concat
-    command: |
-      echo "--- Concatenating 50 pipeline files and uploading once"
-      cat pipelines/pipeline-*.yml > /tmp/combined.yml
-      echo "Combined file line count: $(wc -l < /tmp/combined.yml)"
-      START=$(date +%s%3N)
-      buildkite-agent pipeline upload /tmp/combined.yml
-      END=$(date +%s%3N)
-      echo "~~~ Total concat upload time: $((END - START))ms"
+    command: .buildkite/scripts/test-concat.sh
 
   - label: ":stopwatch: Test 3 - Parallel uploads"
     key: parallel
-    command: |
-      echo "--- Parallel upload of 50 pipeline files"
-      START=$(date +%s%3N)
-      for f in pipelines/pipeline-*.yml; do
-        buildkite-agent pipeline upload "$f" &
-      done
-      wait
-      END=$(date +%s%3N)
-      echo "~~~ Total parallel time: $((END - START))ms"
+    command: .buildkite/scripts/test-parallel.sh
