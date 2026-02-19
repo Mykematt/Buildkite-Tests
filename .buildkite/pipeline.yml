@@ -1,56 +1,37 @@
 steps:
-  - label: "Run_RSpec_Tests"
-    key: "run-rspec-tests"
-    soft_fail: true  # Continue pipeline even if tests fail to ensure artifacts upload
-    plugins:
-      - seek-oss/aws-sm#v2.3.3:
-          env:
-            BUILDKITE_ANALYTICS_TOKEN: buildkite/analytics-token
-            BUILDKITE_TEST_SUITE_SLUG: buildkite/test-suite-slug
-
-      - docker#v5.8.0:
-          image: "ruby:3.1"
-          command:
-            - "/bin/bash"
-            - "-c"
-            - |
-              echo "=== Debugging: Check current directory and files ==="
-              pwd
-              ls -la
-              echo "=== Check if spec directory exists ==="
-              ls -la spec/
-              
-              echo "=== Setting up Ruby environment ==="
-              bundle install --jobs=3
-              
-              echo "=== Debug: Check environment variables ==="
-              echo "BUILDKITE_ANALYTICS_TOKEN: $${BUILDKITE_ANALYTICS_TOKEN:-NOT_SET}"
-              echo "BUILDKITE_TEST_SUITE_SLUG: $${BUILDKITE_TEST_SUITE_SLUG:-NOT_SET}"
-              
-              echo "=== Running RSpec tests ==="
-              mkdir -p tmp
-              
-              # Run RSpec and capture exit code, but continue execution
-              # This ensures buildkite-test_collector runs and artifacts are uploaded
-              set +e  # Disable exit on error
-              bundle exec rspec --format progress --format RspecJunitFormatter --out tmp/junit.xml
-              RSPEC_EXIT_CODE=$?
-              set -e  # Re-enable exit on error
-              
-              echo "=== RSpec completed with exit code: $RSPEC_EXIT_CODE ==="
-              echo "=== Test results should be sent to Test Analytics regardless ==="
-              
-              # Exit with the original RSpec exit code at the end
-              exit $RSPEC_EXIT_CODE
-          propagate-environment: true
-
-    artifact_paths:
-      - "tmp/junit.xml"
-
-  - wait
-
-  - label: "Test Results Summary"
+  - label: ":stopwatch: Test 1 - Sequential uploads"
+    key: sequential
     command: |
-      echo "Tests completed successfully!"
-    depends_on:
-      - "run-rspec-tests"
+      echo "--- Sequential upload of 50 pipeline files"
+      TOTAL_START=$(date +%s%3N)
+      for f in pipelines/pipeline-*.yml; do
+        START=$(date +%s%3N)
+        buildkite-agent pipeline upload "$f"
+        END=$(date +%s%3N)
+        echo "upload $f took $((END - START))ms"
+      done
+      TOTAL_END=$(date +%s%3N)
+      echo "~~~ Total sequential time: $((TOTAL_END - TOTAL_START))ms"
+
+  - label: ":stopwatch: Test 2 - Concat then single upload"
+    key: concat
+    command: |
+      echo "--- Concatenating 50 pipeline files and uploading once"
+      cat pipelines/pipeline-*.yml > /tmp/combined.yml
+      echo "Combined file line count: $(wc -l < /tmp/combined.yml)"
+      START=$(date +%s%3N)
+      buildkite-agent pipeline upload /tmp/combined.yml
+      END=$(date +%s%3N)
+      echo "~~~ Total concat upload time: $((END - START))ms"
+
+  - label: ":stopwatch: Test 3 - Parallel uploads"
+    key: parallel
+    command: |
+      echo "--- Parallel upload of 50 pipeline files"
+      START=$(date +%s%3N)
+      for f in pipelines/pipeline-*.yml; do
+        buildkite-agent pipeline upload "$f" &
+      done
+      wait
+      END=$(date +%s%3N)
+      echo "~~~ Total parallel time: $((END - START))ms"
