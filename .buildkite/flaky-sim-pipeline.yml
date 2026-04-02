@@ -1,0 +1,11 @@
+steps:
+  - label: ":rspec: Flaky test run"
+    command: |
+      bundle install --quiet
+      bundle exec rspec spec/test_spec.rb 
+        --require ./spec/flaky_spec_helper 
+        --format documentation
+    agents:
+      queue: mac
+    env:
+      BUILDKITE_ANALYTICS_TOKEN: LF6ASbQHQJZYJQNwj3uPZQSH
