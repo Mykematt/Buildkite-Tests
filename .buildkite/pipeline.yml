@@ -1,5 +1,9 @@
 steps:
-  - label: ":pipeline: Upload test pipeline"
-    command: buildkite-agent pipeline upload pipelines/cache-self-hosted-test.yml
+  - label: ":rspec: Flaky test run"
+    command: |
+      bundle install --quiet
+      bundle exec rspec spec/test_spec.rb --require ./spec/flaky_spec_helper --format documentation
     agents:
-      queue: linux-hosted
+      queue: mac
+    env:
+      BUILDKITE_ANALYTICS_TOKEN: LF6ASbQHQJZYJQNwj3uPZQSH
